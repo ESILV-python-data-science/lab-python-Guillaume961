@@ -1,11 +1,13 @@
 
 # coding: utf-8
 
-# In[33]:
+# In[83]:
 
 
 import pandas as pd
 import numpy as np
+import seaborn as sns
+get_ipython().magic('matplotlib inline')
 
 
 # In[13]:
@@ -14,10 +16,10 @@ import numpy as np
 jfk_df = pd.read_csv('jfkrelease-2017-dce65d0ec70a54d5744de17d280f3ad2.csv', sep=';')
 
 
-# In[51]:
+# In[57]:
 
 
-#jfk_df.head()
+jfk_df.head()
 
 
 # In[26]:
@@ -60,4 +62,48 @@ nbOfDocType
 
 typesFrequency = jfk_df['Doc Type'].value_counts()
 typesFrequency
+
+
+# In[58]:
+
+
+nbOfAgencies =  jfk_df['Agency'].nunique()
+nbOfAgencies
+
+
+# In[59]:
+
+
+agencyFrequency = jfk_df['Agency'].value_counts()
+agencyFrequency
+
+
+# In[92]:
+
+
+docTypePlot = sns.countplot(x="Doc Type", data=jfk_df)
+docTypePlot
+
+
+# In[99]:
+
+
+agencyPlot = sns.countplot(x="Agency", data=jfk_df)
+agencyPlot
+
+
+# In[123]:
+
+
+agencyPlot = sns.countplot(x="Agency", data=jfk_df).semilogy()
+agencyPlot
+
+
+# In[ ]:
+
+
+# x = np.genfromtxt(jfk_df, delimiter=',', skip_header=10, skip_footer=0, names=['Doc Date']) 
+# xdf = pandas.DataFrame(x)
+# ax = xdf.plot(x='Doc Date', y='Doc Type')
+# ydf.plot(x='TimeStamp', y='Value', ax=ax)
 
