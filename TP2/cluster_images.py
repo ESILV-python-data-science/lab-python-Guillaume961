@@ -105,6 +105,8 @@ if __name__ == "__main__":
         SOURCE_IMG_DIR = args.images_dir
 
         # TODO : write the code to list all the images in the input directory
+        for filename in glob.glob(SOURCE_IMG_DIR+'/*.jpg'):
+            images_path_list.append(filename)
         # and store their path in images_path_list
 
     if not images_path_list:
@@ -113,6 +115,10 @@ if __name__ == "__main__":
 
     # TODO : Extract the feature vector on all the pages found and store the feature
     # vectors in  data
+    for filename in images_path_list:
+        im = Image.open(filename)
+        data.append(extract_features(im))
+        #print(extract_features(im))
 
     # cluster the feature vectors
     if not data:

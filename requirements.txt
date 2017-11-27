@@ -35,13 +35,17 @@ python-dateutil==2.6.1
 pytz==2017.3
 pyzmq==16.0.3
 qtconsole==4.3.1
+scikit-learn==0.19.1
 scipy==1.0.0
 seaborn==0.8.1
 simplegeneric==0.8.1
 six==1.11.0
+smop==0.0.0
 testpath==0.3.1
 tornado==4.5.2
+tqdm==4.19.4
 traitlets==4.3.2
+virtualenv==15.1.0
 wcwidth==0.1.7
 webencodings==0.5.1
 widgetsnbextension==3.0.8

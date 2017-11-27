@@ -7,7 +7,11 @@ How many groups of similar pages do you think there are ?
 
 # Question 2
 
-
+run command : 
+```
+# code block
+cluster_images.py --images-dir "yourPathToImageFolder"
+```
 
 # Question 3
 
