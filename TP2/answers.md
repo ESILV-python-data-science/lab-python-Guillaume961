@@ -16,7 +16,7 @@ cluster_images.py --images-dir "yourPathToImageFolder"
 
 run command : 
 ```
-cluster_images.py --images-dir "C:\Users\Guillaume\Desktop\S9\pythonDataAnalyse\lab-python-Guillaume961\TP2\picture_dataset" --move-images "clusteringImg"
+cluster_images.py --images-dir "yourPathToImageFolder" --move-images "clusteringImg"
 ```
 
 
