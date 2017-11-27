@@ -82,7 +82,6 @@ def copy_to_dir(images, clusters, cluster_dir):
         # copy the image into the cluster directory
         shutil.copy(img_path, clst_path)
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extract features, cluster images and move them to a directory')
     parser.add_argument('--images-dir',required=True)
@@ -129,5 +128,8 @@ if __name__ == "__main__":
     X = np.array(data)
     logger.info("Running clustering")
 
-    # TODO : run the K-Means clusering and call copy_to_dir to copy the image
+    # TODO : run the K-Means clustering and call copy_to_dir to copy the image
+    km = KMeans(n_clusters=3, random_state=0).fit(X)
+    copy_to_dir(images_path_list, km.labels_, "clusteringImg")
     # in the directory corresponding to its cluster
+
