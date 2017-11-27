@@ -9,7 +9,6 @@ How many groups of similar pages do you think there are ?
 
 run command : 
 ```
-# code block
 cluster_images.py --images-dir "yourPathToImageFolder"
 ```
 
