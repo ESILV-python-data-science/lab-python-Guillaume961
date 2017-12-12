@@ -29,6 +29,35 @@ ch.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logger.addHandler(ch)
 
 def extract_features_subresolution(img,img_feature_size = (8, 8)):
+    """
+
+    For a given image, function computes a 8x8 subresolution image and
+    returns a feature vector with pixel values.
+    (0 must correspond to white and 255 to black)
+
+    :param img: the original image (can be color or gray)
+    :type img: pillow image
+    :return: pixel values - feature vector
+    :rtype: list of int in [0,255]
+
+    """
+
+    # convert color images to grey level
+    gray_img = img.convert('L')
+    # find the min dimension to rotate the image if needed
+    min_size = min(img.size)
+    if img.size[1] == min_size:
+        # convert landscape  to portrait
+        rotated_img = gray_img.rotate(90, expand=1)
+    else:
+        rotated_img = gray_img
+
+    # reduce the image to a given size
+    reduced_img = rotated_img.resize(
+        img_feature_size, Image.BOX).filter(ImageFilter.SHARPEN)
+
+    # return the values of the reduced image as features
+    return [255 - i for i in reduced_img.getdata()]
     return None
 
 if __name__ == "__main__":
@@ -49,7 +78,6 @@ if __name__ == "__main__":
         pass
     else:
 
-
         # Load the image list from CSV file using pd.read_csv
         # see the doc for the option since there is no header ;
         # specify the column names :  filename , class
@@ -57,12 +85,13 @@ if __name__ == "__main__":
         column_names = ['filename', 'class']
         file_list = pd.read_csv(args.images_list, header=None, names=column_names)
         logger.info('Loaded {} images in {}'.format(file_list.shape,args.images_list))
+        #print(file_list)
 
         # Extract the feature vector on all the pages found
         # Modify the extract_features from TP_Clustering to extract 8x8 subresolution values
         # white must be 0 and black 255
         data = []
-        for i_path in tqdm(file_list):
+        for i_path in tqdm(file_list.filename):
             page_image = Image.open(i_path)
             data.append(extract_features_subresolution(page_image))
 
