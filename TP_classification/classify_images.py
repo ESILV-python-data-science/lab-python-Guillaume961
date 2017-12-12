@@ -74,7 +74,9 @@ if __name__ == "__main__":
 
 
     if args.load_features:
-        # read features from to_pickle
+        # read features from indicated pickle file
+        df = pd.read_pickle(args.load_features)
+        #print(df)
         pass
     else:
 
@@ -100,18 +102,17 @@ if __name__ == "__main__":
             logger.error("Could not extract any feature vector or class")
             sys.exit(1)
 
-
-
         # convert to np.array
         X = np.array(data)
 
 
-
-
     # save features
     if args.save_features:
-        # convert X to dataframe with pd.DataFrame and save to pickle with to_pickle
-        logger.info('Saved {} features and class to {}'.format(df_features.shape,args.save_features))
+        # convert X to dataframe with pd.DataFrame
+        df = pd.DataFrame(X)
+        # and save to pickle with to_pickle
+        df.to_pickle(args.save_features+'.pickle')
+        logger.info('Saved {} features and class to {}'.format(df.shape, args.save_features))
 
 
     if args.features_only:
