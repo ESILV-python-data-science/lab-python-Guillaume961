@@ -12,6 +12,7 @@ import time
 import sys
 
 from tqdm import tqdm
+from sklearn.neighbors import KNeighborsClassifier
 import pandas as pd
 from PIL import Image, ImageFilter
 from sklearn.cluster import KMeans
@@ -77,6 +78,7 @@ if __name__ == "__main__":
         # read features from indicated pickle file
         df = pd.read_pickle(args.load_features)
         y = list(df["class"])
+        X = df.drop(columns='class')
         #print(df)
         #print(y)
         pass
@@ -127,12 +129,13 @@ if __name__ == "__main__":
     logger.info("Training Classifier")
 
     # Use train_test_split to create train/test split
-    X_train, X_test = train_test_split(df, test_size=0.2)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2)
     logger.info("Train set size is {}".format(X_train.shape))
     logger.info("Test set size is {}".format(X_test.shape))
 
     if args.nearest_neighbors:
         # create KNN classifier with args.nearest_neighbors as a parameter
+        clf = KNeighborsClassifier(args.nearest_neighbors)
         logger.info('Use kNN classifier with k= {}'.format(args.nearest_neighbors))
     else:
         logger.error('No classifier specified')
@@ -140,12 +143,13 @@ if __name__ == "__main__":
 
     # Do Training@
     t0 = time.time()
+    clf.fit(X_train, Y_train)
     logger.info("Training  done in %0.3fs" % (time.time() - t0))
 
     # Do testing
     logger.info("Testing Classifier")
     t0 = time.time()
     predicted = clf.predict(X_test)
-
     # Print score produced by metrics.classification_report and metrics.accuracy_score
+    print(metrics.accuracy_score(Y_test, predicted))
     logger.info("Testing  done in %0.3fs" % (time.time() - t0))
