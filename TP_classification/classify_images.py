@@ -127,6 +127,7 @@ if __name__ == "__main__":
     logger.info("Training Classifier")
 
     # Use train_test_split to create train/test split
+    X_train, X_test = train_test_split(df, test_size=0.2)
     logger.info("Train set size is {}".format(X_train.shape))
     logger.info("Test set size is {}".format(X_test.shape))
 
