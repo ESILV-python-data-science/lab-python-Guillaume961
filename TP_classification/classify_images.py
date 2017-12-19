@@ -76,7 +76,9 @@ if __name__ == "__main__":
     if args.load_features:
         # read features from indicated pickle file
         df = pd.read_pickle(args.load_features)
+        y = list(df["class"])
         #print(df)
+        #print(y)
         pass
     else:
 
@@ -104,12 +106,14 @@ if __name__ == "__main__":
 
         # convert to np.array
         X = np.array(data)
+        y = file_list["class"]
 
 
     # save features
     if args.save_features:
         # convert X to dataframe with pd.DataFrame
         df = pd.DataFrame(X)
+        df["class"] = y
         # and save to pickle with to_pickle
         df.to_pickle(args.save_features+'.pickle')
         logger.info('Saved {} features and class to {}'.format(df.shape, args.save_features))
