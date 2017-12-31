@@ -11,6 +11,7 @@ import logging
 import time
 import sys
 
+from sklearn.linear_model import LogisticRegression
 from tqdm import tqdm
 from sklearn.neighbors import KNeighborsClassifier
 import pandas as pd
@@ -18,9 +19,11 @@ from PIL import Image, ImageFilter
 from sklearn.cluster import KMeans
 from sklearn import svm, metrics, neighbors
 from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.model_selection import GridSearchCV
 
 import numpy as np
-
+import matplotlib.pyplot as plot
 
 # Setup logging
 logger = logging.getLogger('classify_images.py')
@@ -61,6 +64,36 @@ def extract_features_subresolution(img,img_feature_size = (8, 8)):
     return [255 - i for i in reduced_img.getdata()]
     return None
 
+# Train and print metrics for a given classifier with training set and test test
+# Return train accuracy score and test accuracy score
+def classifier_train_test(classifier_name, classifier,X_train, X_test, y_train, y_test) :
+
+    # Do Training@
+    t0 = time.time()
+    clf.fit(X_train, y_train)
+    logger.info("Training done in %0.3fs" % (time.time() - t0))
+
+    # Do testing
+    logger.info("Testing "+classifier_name)
+    t0 = time.time()
+    predicted_test = classifier.predict(X_test)
+
+    logger.info("Testing  done in %0.3fs" % (time.time() - t0))
+    #print('Score on testing : %f' % classifier.score(X_test, y_test))
+    return classifier.score(X_train, y_train),metrics.accuracy_score(y_test,predicted_test)
+
+def getAccuracyTesting(X_test, Y_test, sizeTest):
+    X_none, X_test, Y_none, Y_test = train_test_split(X_test, Y_test, test_size=sizeTest)
+    clf.fit(X_train, Y_train)
+    predicted = clf.predict(X_test)
+    return metrics.accuracy_score(Y_test, predicted)
+
+def getAccuracy(X_train, Y_train, sizeTrain):
+    X_train, X_none, Y_train, y_none = train_test_split(X_train, Y_train, train_size=sizeTrain)
+    clf.fit(X_train, Y_train)
+    predicted = clf.predict(X_test)
+    return metrics.accuracy_score(Y_test, predicted), clf.score(X_train, Y_train)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extract features, train a classifier on images and test the classifier')
     input_group = parser.add_mutually_exclusive_group(required=True)
@@ -68,15 +101,23 @@ if __name__ == "__main__":
     input_group.add_argument('--load-features',help='read features and class from pickle file')
     parser.add_argument('--save-features',help='save features in pickle format')
     parser.add_argument('--limit-samples',type=int, help='limit the number of samples to consider for training')
+    parser.add_argument('--learning-curve', action='store_true')
+    parser.add_argument('--testing-curve', action='store_true')
     classifier_group = parser.add_mutually_exclusive_group(required=True)
     classifier_group.add_argument('--nearest-neighbors',type=int)
+    classifier_group.add_argument('--logistic-regression',type=int)
+    classifier_group.add_argument('--nearest-neighbors-logistic-regression', action='store_true')
+    classifier_group.add_argument('--kernelRBF', action='store_true')
     classifier_group.add_argument('--features-only', action='store_true', help='only extract features, do not train classifiers')
-    args = parser.parse_args()
 
+    args = parser.parse_args()
 
     if args.load_features:
         # read features from indicated pickle file
         df = pd.read_pickle(args.load_features)
+        #limit the dataframe to X samples
+        if args.limit_samples:
+            df = df.sample(args.limit_samples)
         y = list(df["class"])
         X = df.drop(columns='class')
         #print(df)
@@ -120,7 +161,6 @@ if __name__ == "__main__":
         df.to_pickle(args.save_features+'.pickle')
         logger.info('Saved {} features and class to {}'.format(df.shape, args.save_features))
 
-
     if args.features_only:
         logger.info('No classifier to train, exit')
         sys.exit()
@@ -128,28 +168,113 @@ if __name__ == "__main__":
     # Train classifier
     logger.info("Training Classifier")
 
-    # Use train_test_split to create train/test split
-    X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2)
-    logger.info("Train set size is {}".format(X_train.shape))
-    logger.info("Test set size is {}".format(X_test.shape))
-
     if args.nearest_neighbors:
         # create KNN classifier with args.nearest_neighbors as a parameter
         clf = KNeighborsClassifier(args.nearest_neighbors)
         logger.info('Use kNN classifier with k= {}'.format(args.nearest_neighbors))
+
+        # Use train_test_split to create train/test split
+        X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2)
+
+        logger.info("Train set size is {}".format(X_train.shape))
+        logger.info("Test set size is {}".format(X_test.shape))
+
+        train_accuracy, test_accuracy = classifier_train_test("KNN", clf, X_train, X_test, Y_train, Y_test)
+        print('KNN Train accuracy score : ', train_accuracy)
+        print('KNN Test accuracy score :', test_accuracy)
+
+    elif args.logistic_regression:
+        clf = LogisticRegression()
+        logger.info('Use logistic regression classifier with k= {}'.format(args.logistic_regression))
+
+        # Use train_test_split to create train/test split
+        X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2)
+        logger.info("Train set size is {}".format(X_train.shape))
+        logger.info("Test set size is {}".format(X_test.shape))
+
+        train_accuracy, test_accuracy = classifier_train_test("Logistic Regression", clf, X_train, X_test, Y_train, Y_test)
+        print('Logistic Train accuracy score :', train_accuracy)
+        print('Logistic Test accuracy score :', test_accuracy)
+
+    elif args.nearest_neighbors_logistic_regression:
+        # Use train_test_split to create train/test split
+        X_train_validation, X_test, y_train_validation, y_test = train_test_split(X, y, train_size=0.8)
+        logger.info("Test set size is {}".format(X_test.shape))
+        # Use train_test_split to create train/validation split
+        X_train, X_validation, y_train, y_validation = train_test_split(X_train_validation, y_train_validation, train_size=0.8)
+        logger.info("Training set size is {}".format(X_train.shape))
+        logger.info("Validation set size is {}".format(X_validation.shape))
+
+        # Select best KNN classifier k
+        best_k = [0, 0]
+        for i in range(1, 10):
+            clf = neighbors.KNeighborsClassifier(i)
+            logger.info('Use kNN classifier with k= {}'.format(i))
+            # Do Training and Testing
+            train_accuracy, test_accuracy = classifier_train_test("KNN", clf, X_train, X_validation, y_train, y_validation)
+            print('Knn accuracy score :', test_accuracy)
+            if (test_accuracy > best_k[1]):
+                best_k[0] = i
+                best_k[1] = test_accuracy
+
+        # Execute classifier
+        print('Best k = {}'.format(best_k[0]))
+        print('Validation accuracy score = {}'.format(best_k[1]))
+
+    elif args.kernelRBF:
+        # Use train_test_split to create train/test split
+        X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2)
+        logger.info("Train set size is {}".format(X_train.shape))
+        logger.info("Test set size is {}".format(X_test.shape))
+
+        # LINEAR
+        # clf = SVC(kernel='linear')
+
+        # RBF
+        param = {'C': [0.5, 1, 5], 'gamma': [0.05, 0.1, 0.5]}
+        svc = svm.SVC(kernel='rbf')
+        clf = GridSearchCV(svc, param)
+
+        train_accuracy, test_accuracy = classifier_train_test("RBF", clf, X_train, X_test, Y_train, Y_test)
+        print('RBF Train accuracy score : ', train_accuracy)
+        print('RBF Test accuracy score :', test_accuracy)
+
     else:
         logger.error('No classifier specified')
         sys.exit()
 
-    # Do Training@
-    t0 = time.time()
-    clf.fit(X_train, Y_train)
-    logger.info("Training  done in %0.3fs" % (time.time() - t0))
 
-    # Do testing
-    logger.info("Testing Classifier")
-    t0 = time.time()
-    predicted = clf.predict(X_test)
-    # Print score produced by metrics.classification_report and metrics.accuracy_score
-    print(metrics.accuracy_score(Y_test, predicted))
-    logger.info("Testing  done in %0.3fs" % (time.time() - t0))
+if args.learning_curve:
+     curv_y = []
+     curv_y2 = []
+     training_size = np.array([0.01, 0.10, 0.20, 0.40, 0.60, 0.80, 0.99])
+     curv_x = df.shape[0] * np.array(training_size)
+     for i in range(0, 7):
+         curv_y.append(getAccuracy(X_train, Y_train, training_size[i])[0])
+         curv_y2.append(getAccuracy(X_train, Y_train, training_size[i])[1])
+     plot.plot(curv_x, curv_y)
+     plot.plot(curv_x, curv_y2)
+     plot.title("Training curves")
+     plot.xlabel("Train set size")
+     plot.ylabel("Accuracy")
+     plot.show()
+
+if args.testing_curve:
+ accuracy_score = []
+ means = []
+ errors = []
+ testing_size = np.array([0.01, 0.10, 0.20, 0.40, 0.60, 0.80, 0.99])
+ test_set_size = df.shape[0] * np.array(testing_size)
+ for i in range(0, 7):
+     for j in range(0, 10):
+         accuracy_score.append(getAccuracyTesting(X_test, Y_test, testing_size[i]))
+     means.append(np.mean(accuracy_score))
+     errors.append(np.std(accuracy_score))
+     print("Mean of test set = {} for a test set of size {}".format(np.mean(accuracy_score), testing_size[i]))
+     print("Standard deviation of test set = {} for a test set of size {}".format(np.std(accuracy_score), testing_size[i]))
+ plot.scatter(test_set_size, means)
+ plot.errorbar(test_set_size, means, errors, ecolor='red')
+ plot.title("Testing curves")
+ plot.xlabel("Test set size")
+ plot.ylabel("Test accuracy")
+ plot.show()
